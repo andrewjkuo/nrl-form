@@ -56,7 +56,7 @@ def get_form():
     client = storage.Client()
     bucket = client.get_bucket('nrlform')
     blob = bucket.blob('form_data.json')
-    df = blob.download_as_string() 
+    df = blob.download_as_string()
     return df
 
 @app.route('/v1/updateform', methods=['GET'])
@@ -118,11 +118,11 @@ def update_form():
     client = storage.Client()
     bucket = client.get_bucket('nrlform')
     blob = bucket.get_blob('form_data.json')
-    
+
     out_json = out_df.to_json(orient='records')
     blob.upload_from_string(out_json)
 
     return ('', 204)
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=4008)
+    app.run(host='127.0.0.1', port=8001)

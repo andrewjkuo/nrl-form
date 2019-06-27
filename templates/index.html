@@ -11,14 +11,13 @@
 </head>
 <body>
     <div class="container">
-        <div class "row">
+        <div class="row">
+          <div class="col-md-12">
             <h1>NRL Form Guide</h1>
+          </div>
         </div>
-        <div class "row">
-            <div id="chartArea">
-            </div>
-        </div>
-        <div class "row">
+        <div class="row">
+          <div class="col-md-12">
             <div class="dropdown">
               <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Year
               <span class="caret"></span></button>
@@ -30,6 +29,12 @@
                     <li><a href="#" onclick="updateGraph(2019)">2019</a></li>
               </ul>
             </div>
+            <br>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 text-center" id="chartArea">
+          </div>
         </div>
     </div>
     <script src="static/nrl.js"></script>
