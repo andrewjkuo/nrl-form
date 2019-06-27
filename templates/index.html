@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/style.css">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.11.0.min.js"></script>
+    <script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class "row">
+            <h1>NRL Form Guide</h1>
+        </div>
+        <div class "row">
+            <div id="chartArea">
+            </div>
+        </div>
+        <div class "row">
+            <div class="dropdown">
+              <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Year
+              <span class="caret"></span></button>
+              <ul class="dropdown-menu">
+                    <li><a href="#" onclick="updateGraph(2015)">2015</a></li>
+                    <li><a href="#" onclick="updateGraph(2016)">2016</a></li>
+                    <li><a href="#" onclick="updateGraph(2017)">2017</a></li>
+                    <li><a href="#" onclick="updateGraph(2018)">2018</a></li>
+                    <li><a href="#" onclick="updateGraph(2019)">2019</a></li>
+              </ul>
+            </div>
+        </div>
+    </div>
+    <script src="static/nrl.js"></script>
+</body>
+</html>

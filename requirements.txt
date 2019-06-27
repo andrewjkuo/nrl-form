@@ -1,0 +1,6 @@
+pandas
+numpy
+xlrd
+Flask
+flask_cors
+google-cloud-storage
