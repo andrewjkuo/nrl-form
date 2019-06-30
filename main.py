@@ -61,6 +61,12 @@ def get_form():
 
 @app.route('/v1/updateform', methods=['GET'])
 def update_form():
+    client = storage.Client()
+    bucket = client.get_bucket('nrlform')
+    blob = bucket.get_blob('form_data.json')
+    old = blob.download_as_string()
+    old = pd.read_json(old)
+
     df = pd.read_excel('http://www.aussportsbetting.com/historical_data/nrl.xlsx', skiprows=1)
     df = df[df.Date.dt.year > 2013].iloc[:, [0,1,2,3,4,5,6]]
 
@@ -87,42 +93,51 @@ def update_form():
     df['round'] = rounds
     df['m_order'] = df.year * 100 + df['round'] * 2
 
-    all_form = dict()
-    for year in range(2015,2020):
-        for rnd in range(1, df[df.year == year]['round'].max()+2):
-            all_form[year * 100 +(2*rnd)] = form_marg(df, year * 100+(2*rnd), 150, 60)
+    new_rnds = df[[False if x in old.rnd_id.unique() else True for x in df.m_order]].m_order.unique()
+    new_rnds = new_rnds[new_rnds > 201500]
 
-    all_vals = []
-    for key in all_form:
-        temp = []
-        for k2 in df['Home Team'].unique():
-            temp.append(all_form[key][k2])
-        all_vals.append(temp)
+    if len(new_rnds) > 0:
+        all_form = dict()
+        for rnd_id in new_rnds:
+            all_form[rnd_id] = form_marg(df, rnd_id, 150, 60)
 
-    all_vals = np.array(all_vals)
+        all_vals = []
+        for key in all_form:
+            temp = []
+            for k2 in df['Home Team'].unique():
+                temp.append(all_form[key][k2])
+            all_vals.append(temp)
 
-    data = []
-    for k1 in all_form:
-        for k2 in all_form[k1]:
-            data.append([k1, k2, all_form[k1][k2]])
+        all_vals = np.array(all_vals)
 
-    out_df = pd.DataFrame(data, columns=['rnd_id','team','form'])
+        data = []
+        for k1 in all_form:
+            for k2 in all_form[k1]:
+                data.append([k1, k2, all_form[k1][k2]])
 
-    out_df['round'] = (out_df.rnd_id % 100) / 2
-    out_df['year'] = out_df.rnd_id // 100
-    out_df.head()
+        out_df = pd.DataFrame(data, columns=['rnd_id','team','form'])
 
-    mean_lookup = dict(out_df.groupby('rnd_id').form.mean())
-    out_df['form'] = out_df.apply(lambda row: row.form - mean_lookup[row.rnd_id], axis=1)
+        out_df['round'] = (out_df.rnd_id % 100) / 2
+        out_df['year'] = out_df.rnd_id // 100
+        out_df.head()
 
-    client = storage.Client()
-    bucket = client.get_bucket('nrlform')
-    blob = bucket.get_blob('form_data.json')
+        mean_lookup = dict(out_df.groupby('rnd_id').form.mean())
+        out_df['form'] = out_df.apply(lambda row: row.form - mean_lookup[row.rnd_id], axis=1)
 
-    out_json = out_df.to_json(orient='records')
-    blob.upload_from_string(out_json)
+        out_df = pd.concat([old, out_df])
+        out_df.index = range(out_df.shape[0])
 
-    return ('', 204)
+        client = storage.Client()
+        bucket = client.get_bucket('nrlform')
+        blob = bucket.get_blob('form_data.json')
+
+        out_json = out_df.to_json(orient='records')
+        blob.upload_from_string(out_json)
+
+        return 'Successfully updated dataset.'
+    else:
+        return 'No new data to update.'
+
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8001)
