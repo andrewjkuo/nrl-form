@@ -18,7 +18,6 @@ def get_log_marg(row):
 def form_marg(df, end_point, date_sub=150, time_weight=60):
     builder = df[['m_order','Home Team','Away Team','log_marg']]
     start_date = end_point - date_sub
-
     builder = builder[(builder.m_order > start_date) & (builder.m_order < end_point)]
     form = {team: 0 for team in builder['Home Team'].unique()}
     team_list = list(builder['Home Team'].unique())
@@ -41,7 +40,7 @@ def form_marg(df, end_point, date_sub=150, time_weight=60):
                 else:
                     summer += (form[row['Home Team']] - row.log_marg) * weight
             form[i] = summer / divider
-        error = np.sum((np.array(list(old_form.values())) - np.array(list(form.values())))**2)
+        error = sum([(old_form[x] - form[x])**2 for x in team_list])
     return(form)
 
 app = Flask(__name__)
@@ -93,8 +92,8 @@ def update_form():
     df['round'] = rounds
     df['m_order'] = df.year * 100 + df['round'] * 2
 
-    new_rnds = df[[False if x in old.rnd_id.unique() else True for x in df.m_order]].m_order.unique()
-    new_rnds = new_rnds[new_rnds > 201500]
+    new_rnds = df[[False if x + 2 in old.rnd_id.unique() else True for x in df.m_order]].m_order.unique()
+    new_rnds = new_rnds[new_rnds > 201500] + 2
 
     if len(new_rnds) > 0:
         all_form = dict()
@@ -124,7 +123,7 @@ def update_form():
         mean_lookup = dict(out_df.groupby('rnd_id').form.mean())
         out_df['form'] = out_df.apply(lambda row: row.form - mean_lookup[row.rnd_id], axis=1)
 
-        out_df = pd.concat([old, out_df])
+        out_df = pd.concat([old, out_df], 0)
         out_df.index = range(out_df.shape[0])
 
         client = storage.Client()
