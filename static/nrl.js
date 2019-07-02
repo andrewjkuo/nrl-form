@@ -17,6 +17,25 @@ var team_col = {
     'Wests Tigers': '#F48521'
 }
 
+var team_img = [
+    ['Brisbane Broncos','Broncos.gif', false],
+    ['Canberra Raiders','Raiders.gif', false],
+    ['Canterbury Bulldogs','Bulldogs.gif', false],
+    ['Cronulla Sharks','Sharks.gif', false],
+    ['Gold Coast Titans','Titans.gif', false],
+    ['Manly Sea Eagles','Sea Eagles.gif', false],
+    ['Melbourne Storm','Storm.gif', false],
+    ['New Zealand Warriors','Warriors.gif', false],
+    ['Newcastle Knights','Knights.gif', false],
+    ['North QLD Cowboys','Cowboys.gif', false],
+    ['Parramatta Eels','Eels.gif', false],
+    ['Penrith Panthers','Panthers.gif', false],
+    ['South Sydney Rabbitohs','Rabbitohs.gif', false],
+    ['St George Dragons','Dragons.gif', false],
+    ['Sydney Roosters','Roosters.gif', false],
+    ['Wests Tigers','Tigers.gif', false]
+]
+
 var margin = {top: 30, right: 20, bottom: 40, left: 50},
 width = 900 - margin.left - margin.right,
 height = 600 - margin.top - margin.bottom;
@@ -50,6 +69,48 @@ var div = d3.select("body").append("div")
             .attr("transform",
                   "translate(" + margin.left + "," + margin.top + ")");
 
+    d3.select("#chartArea").selectAll('rect')
+        .data(team_img)
+        .enter()
+        .append("img")
+            .attr('class', 'nrl_logo')
+            .attr('id', function(d){ return 'logo'+d[0].replace(/\s+/g, '');})
+              .attr('src', function (d) {
+                  return 'static/img/team_logos/'+d[1];
+              })
+              .attr('width', '70px')
+              .style('border', '1px solid #999999')
+              .style('border-radius', '8px')
+              .style('padding', '2px')
+              .on("click", function(d) {
+                  if (d[2]) {
+                      for (var i = 0; i < team_img.length; i++) {
+                          team_img[i][2] = false;
+                      }
+                      d3.selectAll(".line")
+                          .style("opacity", 1)
+                          .style("stroke-width", 3);
+                      d3.selectAll(".nrl_logo")
+                          .style('border', '1px solid #999999');
+                  } else {
+                      for (var i = 0; i < team_img.length; i++) {
+                          team_img[i][2] = false;
+                      }
+                      d[2] = true;
+                  d3.selectAll(".line")
+                      .style("opacity", 0.3)
+                      .style("stroke-width", 2);
+                  d3.select("#tag"+d[0].replace(/\s+/g, ''))
+                      .style("stroke-width", 5)
+                      .style("opacity", 1);
+                    d3.selectAll(".nrl_logo")
+                        .style('border', '1px solid #999999');
+                    d3.select("#logo"+d[0].replace(/\s+/g, ''))
+                        .style("border", "5px solid rgba(0, 140, 186, 0.5)");
+                    }
+              });
+
+
     d3.json("https://nrlform.appspot.com/v1/nrlform").then(function(data) {
         data = data.filter(function(d) {
             return d.year == 2019;
@@ -82,6 +143,11 @@ var div = d3.select("body").append("div")
                     div.html(d.values[0].team)
                         .style("left", (d3.event.pageX) + "px")
                         .style("top", (d3.event.pageY - 28) + "px");
+                    for (var i = 0; i < team_img.length; i++) {
+                        team_img[i][2] = false;
+                    }
+                    d3.selectAll(".nrl_logo")
+                        .style('border', '1px solid #999999');
                 })
                 .on("mouseout", function(d) {
                     div.transition()
@@ -119,6 +185,8 @@ var div = d3.select("body").append("div")
     });
 
 function updateGraph(year) {
+    d3.select("h3")
+        .text(year);
 
 d3.json("https://nrlform.appspot.com/v1/nrlform").then(function(data) {
     data = data.filter(function(d) {
