@@ -1,16 +1,28 @@
 body {
-    background-image: url("img/Mark-OMeley-5469339.jpg");
-    background-position: 50% 50%;
-    background-repeat: repeat;
+    /* background-image: url("img/Mark-OMeley-5469339.jpg"); */
+    /* background-position: 50% 50%; */
+    /* background-repeat: repeat; */
+    background: #EEE;
 }
 path {
     stroke: steelblue;
     stroke-width: 3;
     fill: none;
 }
-div.container {
-    background-color: #E2E2E2;
+.navbar {
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+    background: #2a7f39;
+}
+#date-select {
+    width: auto;
+}
+#contents {
+    background-color: white;
     padding: 25px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+}
+#nrl-buttons {
+    padding: 15px;
 }
 .xaxis path,
 .xaxis line,
@@ -39,7 +51,6 @@ div.tooltip {
     height: 100%;
     width: 100%;
     padding: 0;
-    padding-bottom: 100%;
 }
 
 #chartArea > svg {
