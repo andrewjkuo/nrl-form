@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 from random import shuffle
 import datetime as dt
+import io
+import requests
 
 from flask import Flask, jsonify, render_template
 from flask_cors import CORS
