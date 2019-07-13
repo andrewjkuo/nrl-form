@@ -65,8 +65,12 @@ def update_form():
     blob = bucket.get_blob('form_data.json')
     old = blob.download_as_string()
     old = pd.read_json(old)
+    
+    url = 'http://www.aussportsbetting.com/historical_data/nrl.xlsx'
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
+    response = requests.get(url, headers=headers)
 
-    df = pd.read_excel('http://www.aussportsbetting.com/historical_data/nrl.xlsx', skiprows=1)
+    df = pd.read_excel(io.BytesIO(response.content), skiprows=1)
     df = df[df.Date.dt.year > 2013].iloc[:, [0,1,2,3,4,5,6]]
 
     df['marg'] = df['Home Score'] - df['Away Score']
