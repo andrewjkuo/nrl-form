@@ -79,7 +79,7 @@ d3.select("#nrl-buttons").selectAll('rect')
 .attr('src', function (d) {
     return 'static/img/team_logos/'+d[1];
 })
-.attr('width', '70px')
+.attr('width', '65px')
 .style('border', '1px solid #999999')
 .style('border-radius', '8px')
 .style('padding', '2px')
