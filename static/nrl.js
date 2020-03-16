@@ -114,7 +114,7 @@ d3.select("#nrl-buttons").selectAll('rect')
 
 d3.json("https://nrlform.appspot.com/v1/nrlform").then(function(data) {
     data = data.filter(function(d) {
-        return d.year == 2019;
+        return d.year == 2020;
     });
     data.forEach(function(d) {
         d.round = +d.round;

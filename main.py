@@ -20,7 +20,7 @@ def get_log_marg(row):
 def form_marg(df, end_point, date_sub=150, time_weight=60):
     builder = df[['m_order','Home Team','Away Team','log_marg']]
     start_date = end_point - date_sub
-    builder = builder[(builder.m_order > start_date) & (builder.m_order < end_point)]
+    builder = builder[(builder.m_order > start_date) & (builder.m_order <= end_point)]
     form = {team: 0 for team in builder['Home Team'].unique()}
     team_list = list(builder['Home Team'].unique())
     team_pos = [i for i in range(len(team_list))]
@@ -99,7 +99,7 @@ def update_form():
     df['m_order'] = df.year * 100 + df['round'] * 2
 
     new_rnds = df[[False if x + 2 in old.rnd_id.unique() else True for x in df.m_order]].m_order.unique()
-    new_rnds = new_rnds[new_rnds > 201500] + 2
+    new_rnds = new_rnds[new_rnds > 201500]
 
     if len(new_rnds) > 0:
         all_form = dict()
@@ -124,12 +124,23 @@ def update_form():
 
         out_df['round'] = (out_df.rnd_id % 100) / 2
         out_df['year'] = out_df.rnd_id // 100
-        out_df.head()
 
         mean_lookup = dict(out_df.groupby('rnd_id').form.mean())
         out_df['form'] = out_df.apply(lambda row: row.form - mean_lookup[row.rnd_id], axis=1)
 
         out_df = pd.concat([old, out_df], 0)
+
+        for yr in range(out_df.year.min() + 1, out_df.year.max() + 1):
+            tmp = out_df[out_df.year == yr]
+            if tmp['round'].min != 0:
+                tmp2 = out_df[out_df.year == yr - 1]
+                tmp2 = tmp2[tmp2['round'] == tmp2['round'].max()]
+                tmp2['rnd_id'] = yr * 100
+                tmp2['round'] = 0.0
+                tmp2['year'] = yr
+                out_df = pd.concat([out_df, tmp2], 0)
+
+        out_df = out_df.sort_values('rnd_id')
         out_df.index = range(out_df.shape[0])
 
         client = storage.Client()
