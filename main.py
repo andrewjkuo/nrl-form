@@ -140,7 +140,7 @@ def update_form():
                 tmp2['year'] = yr
                 out_df = pd.concat([out_df, tmp2], 0)
 
-        out_df.drop_duplicates(subset=['rnd_id]', inplace=True)
+        out_df.drop_duplicates(subset=['rnd_id', 'team'], inplace=True)
         out_df = out_df.sort_values('rnd_id')
         out_df.index = range(out_df.shape[0])
 
