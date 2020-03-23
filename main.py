@@ -98,7 +98,7 @@ def update_form():
     df['round'] = rounds
     df['m_order'] = df.year * 100 + df['round'] * 2
 
-    new_rnds = df[[False if x + 2 in old.rnd_id.unique() else True for x in df.m_order]].m_order.unique()
+    new_rnds = df[[False if x in old.rnd_id.unique() else True for x in df.m_order]].m_order.unique()
     new_rnds = new_rnds[new_rnds > 201500]
 
     if len(new_rnds) > 0:
@@ -140,6 +140,7 @@ def update_form():
                 tmp2['year'] = yr
                 out_df = pd.concat([out_df, tmp2], 0)
 
+        out_df.drop_duplicates(subset=['rnd_id]', inplace=True)
         out_df = out_df.sort_values('rnd_id')
         out_df.index = range(out_df.shape[0])
 
