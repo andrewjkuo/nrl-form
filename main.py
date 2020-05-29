@@ -113,12 +113,12 @@ def update_form():
     df = df.sort_values('mtc_date')
     df.index = range(df.shape[0])
 
-    df['m_order'] = df.year * 100 + df['rnd_number'] * 2
+    df['m_order'] = df.season * 100 + df['rnd_number'] * 2
 
     if df['m_order'].max() == old['rnd_id'].max():
         old = old[old.rnd_id != old.rnd_id.max()]
 
-    new_rnds = df[[False if x in old.rnd_id.unique() else True for x in df.m_order.unique()]].m_order.unique()
+    new_rnds = df[[False if x in old.rnd_id.unique() else True for x in df.m_order]].m_order.unique()
     new_rnds = new_rnds[new_rnds > 201500]
 
     if len(new_rnds) > 0:

@@ -1,4 +1,7 @@
 pandas
+pyyaml
+pymysql
+sqlalchemy
 numpy
 xlrd
 Flask
