@@ -4,10 +4,33 @@ from random import shuffle
 import datetime as dt
 import io
 import requests
+import yaml
+
+import pymysql
+import sqlalchemy
 
 from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 from google.cloud import storage
+
+tm_repl_dict = {
+    'Broncos': 'Brisbane Broncos',
+    'Bulldogs': 'Canterbury Bulldogs',
+    'Cowboys': 'North QLD Cowboys',
+    'Dragons': 'St George Dragons',
+    'Eels': 'Parramatta Eels',
+    'Knights': 'Newcastle Knights',
+    'Panthers': 'Penrith Panthers',
+    'Rabbitohs': 'South Sydney Rabbitohs',
+    'Raiders': 'Canberra Raiders',
+    'Roosters': 'Sydney Roosters',
+    'Sea Eagles': 'Manly Sea Eagles',
+    'Sharks': 'Cronulla Sharks',
+    'Storm': 'Melbourne Storm',
+    'Titans': 'Gold Coast Titans',
+    'Warriors': 'New Zealand Warriors',
+    'Wests Tigers': 'Wests Tigers'
+}
 
 def get_log_marg(row):
     marg = row.marg
@@ -18,11 +41,11 @@ def get_log_marg(row):
         return (marg / np.abs(marg)) * amt
 
 def form_marg(df, end_point, date_sub=150, time_weight=60):
-    builder = df[['m_order','Home Team','Away Team','log_marg']]
+    builder = df[['m_order','h_tm','a_tm','log_marg']]
     start_date = end_point - date_sub
     builder = builder[(builder.m_order > start_date) & (builder.m_order <= end_point)]
-    form = {team: 0 for team in builder['Home Team'].unique()}
-    team_list = list(builder['Home Team'].unique())
+    form = {team: 0 for team in builder['h_tm'].unique()}
+    team_list = list(builder['h_tm'].unique())
     team_pos = [i for i in range(len(team_list))]
     error = 999
     while error > 1e-20:
@@ -31,16 +54,16 @@ def form_marg(df, end_point, date_sub=150, time_weight=60):
         for pos in team_pos:
             i = team_list[pos]
             team = i
-            temp = builder[(builder['Home Team'] == team) | (builder['Away Team'] == team)]
+            temp = builder[(builder['h_tm'] == team) | (builder['a_tm'] == team)]
             summer = 0
             divider = 0
             for index, row in temp.iterrows():
                 weight = 1 / float(np.exp((end_point - row.m_order) / time_weight))
                 divider += weight
-                if row['Home Team'] == team:
-                    summer += (form[row['Away Team']] + row.log_marg) * weight
+                if row['h_tm'] == team:
+                    summer += (form[row['a_tm']] + row.log_marg) * weight
                 else:
-                    summer += (form[row['Home Team']] - row.log_marg) * weight
+                    summer += (form[row['h_tm']] - row.log_marg) * weight
             form[i] = summer / divider
         error = sum([(old_form[x] - form[x])**2 for x in team_list])
     return(form)
@@ -67,38 +90,35 @@ def update_form():
     blob = bucket.get_blob('form_data.json')
     old = blob.download_as_string()
     old = pd.read_json(old)
-    
-    url = 'http://www.aussportsbetting.com/historical_data/nrl.xlsx'
-    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
-    response = requests.get(url, headers=headers)
 
-    df = pd.read_excel(io.BytesIO(response.content), skiprows=1)
-    df = df[df.Date.dt.year > 2013].iloc[:, [0,1,2,3,4,5,6]]
+    with open('secrets.yaml', 'r') as stream:
+        secrets = yaml.load(stream)
 
-    df['marg'] = df['Home Score'] - df['Away Score']
+    username = secrets['db_uname']
+    password = secrets['db_pass']
+    address = secrets['db_address']
+
+    db = sqlalchemy.create_engine('mysql+pymysql://{}:{}@{}'.format(username,password,address))
+    conn = db.connect()
+
+    df = pd.read_sql('select * from access_nrl_match where season > 2013',conn)
+    conn.close()
+
+    df['h_tm'] = df['h_tm'].map(tm_repl_dict)
+    df['a_tm'] = df['a_tm'].map(tm_repl_dict)
+
+    df['marg'] = df['h_pts'] - df['a_pts']
     df['log_marg'] = df.apply(get_log_marg, axis=1)
-    df['year'] = df.Date.dt.year
-    df['dow'] = df.Date.dt.dayofweek.apply(lambda x: x - 1 if x > 1 else x + 6)
-    df = df.sort_values('Date')
+    df['dow'] = pd.to_datetime(df.mtc_date).dt.dayofweek.apply(lambda x: x - 1 if x > 1 else x + 6)
+    df = df.sort_values('mtc_date')
     df.index = range(df.shape[0])
 
-    rounds = []
-    curr_rnd = 26
-    curr_year = 2013
-    last_dow = 7
-    for index, row in df.iterrows():
-        if row.year > curr_year:
-            curr_year = row.year
-            curr_rnd = 1
-        elif row.dow < last_dow:
-            curr_rnd += 1
-        last_dow = row.dow
-        rounds.append(curr_rnd)
+    df['m_order'] = df.year * 100 + df['rnd_number'] * 2
 
-    df['round'] = rounds
-    df['m_order'] = df.year * 100 + df['round'] * 2
+    if df['m_order'].max() == old['rnd_id'].max():
+        old = old[old.rnd_id != old.rnd_id.max()]
 
-    new_rnds = df[[False if x in old.rnd_id.unique() else True for x in df.m_order]].m_order.unique()
+    new_rnds = df[[False if x in old.rnd_id.unique() else True for x in df.m_order.unique()]].m_order.unique()
     new_rnds = new_rnds[new_rnds > 201500]
 
     if len(new_rnds) > 0:
@@ -109,7 +129,7 @@ def update_form():
         all_vals = []
         for key in all_form:
             temp = []
-            for k2 in df['Home Team'].unique():
+            for k2 in df['h_tm'].unique():
                 temp.append(all_form[key][k2])
             all_vals.append(temp)
 
