@@ -1,9 +1,11 @@
-pandas
+pandas==1.3
 pyyaml
 pymysql
-sqlalchemy
+SQLAlchemy==1.4
 numpy
 xlrd
 Flask
 flask_cors
 google-cloud-storage
+
+gunicorn

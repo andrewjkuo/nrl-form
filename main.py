@@ -9,7 +9,7 @@ import yaml
 import pymysql
 import sqlalchemy
 
-from flask import Flask, jsonify, render_template
+from flask import Flask, jsonify, render_template, redirect
 from flask_cors import CORS
 from google.cloud import storage
 
@@ -17,6 +17,7 @@ tm_repl_dict = {
     'Broncos': 'Brisbane Broncos',
     'Bulldogs': 'Canterbury Bulldogs',
     'Cowboys': 'North QLD Cowboys',
+    'Dolphins': 'Dolphins',
     'Dragons': 'St George Dragons',
     'Eels': 'Parramatta Eels',
     'Knights': 'Newcastle Knights',
@@ -73,7 +74,8 @@ CORS(app)
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template("index.html")
+    # return render_template("index.html")
+    return redirect("https://dr00bot.com/projects/nrl-form", code=301)
 
 @app.route('/v1/nrlform', methods=['GET'])
 def get_form():
@@ -92,7 +94,7 @@ def update_form():
     old = pd.read_json(old)
 
     with open('secrets.yaml', 'r') as stream:
-        secrets = yaml.load(stream)
+        secrets = yaml.safe_load(stream)
 
     username = secrets['db_uname']
     password = secrets['db_pass']
@@ -130,7 +132,7 @@ def update_form():
         for key in all_form:
             temp = []
             for k2 in df['h_tm'].unique():
-                temp.append(all_form[key][k2])
+                temp.append(all_form[key].get(k2, 'Dolphins'))
             all_vals.append(temp)
 
         all_vals = np.array(all_vals)
@@ -175,6 +177,14 @@ def update_form():
     else:
         return 'No new data to update.'
 
+@app.route("/atpembs", methods=["GET"])
+def atp_embs():
+    with open('p_embs_200.json', 'r') as f:
+        data = f.read()
+
+    return data
+
 
 if __name__ == '__main__':
     app.run(host='127.0.0.1', port=8001)
+
